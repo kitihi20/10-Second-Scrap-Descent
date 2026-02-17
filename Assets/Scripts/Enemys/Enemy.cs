@@ -14,7 +14,7 @@ public abstract class Enemy : MonoBehaviour
     protected abstract void E_Update(float dtime);
     protected abstract void E_Damage(int d);
     protected abstract void E_Death();
-    public abstract void E_Destroy();
+    protected abstract void E_Destroy();
 
     public abstract Vector3 GetPosition();
     public abstract Transform GetTransform();
@@ -25,6 +25,10 @@ public abstract class Enemy : MonoBehaviour
         deathFlag = false;
         nowHealth = maxHealth;
         E_Start();
+    }
+    public void E_A_Update(float dtime)
+    {
+        E_Update(dtime);
     }
     public int E_A_Damage(int d)
     {
@@ -40,9 +44,10 @@ public abstract class Enemy : MonoBehaviour
 
         return nowHealth;
     }
-    public void E_A_Update(float dtime)
+    public void E_A_Destroy()
     {
-        E_Update(dtime);
+        PlayerLog.AddLog(string.Format("DESTROY >>> {0}", enemyName));
+        E_Destroy();
     }
 
     //

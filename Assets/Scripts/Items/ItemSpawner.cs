@@ -39,7 +39,7 @@ public class ItemSpawner : MonoBehaviour
     {
         for(int i = 0; i < fallingItems.Length; ++i)
         {
-            if(fallingItems[i].GetFalling())
+            if(fallingItems[i].isFalling)
             {
                 fallingItems[i].gameObject.SetActive(false);
             }

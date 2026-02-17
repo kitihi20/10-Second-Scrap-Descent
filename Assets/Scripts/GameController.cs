@@ -7,21 +7,20 @@ using TMPro;
 public class GameController : MonoBehaviour
 {
     [Header("player")]
-    [SerializeField] PlayerTextbox player_textbox;
     [SerializeField] PlayerController player;
     [SerializeField] PlayerCameraController playerCamera;
+    [SerializeField] PlayerUI playerUI;
 
     [Header("items")]
     [SerializeField] ItemSpawner items_spawner;
 
     [Header("enemys")]
-    [SerializeField] EnemyAreaSpawner enemy_spawner1;
-    [SerializeField] EnemyAreaSpawner enemy_spawner2;
+    [SerializeField] EnemyAreaSpawner[] enemy_spawner1;
+    [SerializeField] EnemyAreaSpawner[] enemy_spawner2;
 
     [Header("level")]
     [SerializeField] Transform titleCameraPos;
     [SerializeField] GameObject titleCanvas;
-    [SerializeField] GameObject gameCanvas;
     [SerializeField] GameObject fallAreas;
     [SerializeField] Transform fallStartPosition;
     [SerializeField] GameObject battleAreas;
@@ -40,17 +39,6 @@ public class GameController : MonoBehaviour
     float dtime;
 
     PlayerInput plInput;
-
-    public enum GameState
-    {
-        title,
-        introduction,
-        fall,
-        annihilation,
-        boss,
-        ending,
-        result
-    }
     
     void Start()
     {
@@ -63,51 +51,81 @@ public class GameController : MonoBehaviour
         dtime = Time.deltaTime;
     }
 
-    void SetState(GameState s)
+    void SetState(GameState s, bool forceMode=false)
     {
-        if(nowState == s){ return; }
+        if(nowState == s && !forceMode){ return; }
         nowState = s;
 
         switch(nowState)
         {
             case GameState.title:
-                titleCanvas.SetActive(true);
-                gameCanvas.SetActive(false);
-                resultCanvas.SetActive(false);
-                player_textbox.SetActive(false);
-                player.SetPlayerMode(PlayerController.PlayerState.idle);
+                //player
+                player.SetPlayerMode(PlayerState.idle);
                 player.SetPlayerPosition(Vector3.zero);
                 playerCamera.SetIdleTransform(titleCameraPos);
                 playerCamera.SetTarget(player.GetCenterTra());
-                playerCamera.SetMode(PlayerCameraController.CameraMode.idle);
+                playerCamera.SetMode(PlayerState.idle);
+                //ui
+                titleCanvas.SetActive(true);
+                resultCanvas.SetActive(false);
+                playerUI.SetState(PlayerState.idle);
+                playerUI.SetText("");
+                //sys
                 fallAreas.SetActive(false);
                 battleAreas.SetActive(false);
+                PlayerLog.ResetLog();
             break;
             case GameState.introduction:
-            titleCanvas.SetActive(false);
-                
+                //player
+                //ui
+                titleCanvas.SetActive(false);
+                //sys
             break;
             case GameState.fall:
-                gameCanvas.SetActive(true);
-                player.SetPlayerMode(PlayerController.PlayerState.fall);
+                //player
+                player.SetPlayerMode(PlayerState.fall);
                 player.SetPlayerPosition(fallStartPosition.position);
+                playerCamera.SetMode(PlayerState.fall);
+                //ui
+                playerUI.SetState(PlayerState.fall);
+                //sys
                 fallAreas.SetActive(true);
                 battleAreas.SetActive(false);
-                items_spawner.Spawn();
             break;
             case GameState.annihilation:
-                player.SetPlayerMode(PlayerController.PlayerState.battle);
+                //player
+                player.SetPlayerMode(PlayerState.battle);
                 player.SetPlayerPosition(battleStartPosition.position);
+                playerCamera.SetMode(PlayerState.battle);
+                //ui
+                playerUI.SetState(PlayerState.battle);
+                //sys
                 fallAreas.SetActive(false);
                 battleAreas.SetActive(true);
             break;
+            case GameState.boss:
+                //player
+                playerCamera.SetMode(PlayerState.battle);
+                //ui
+                playerUI.SetState(PlayerState.battle);
+                //sys
+            break;
             case GameState.ending:
-                gameCanvas.SetActive(false);
+                //player
                 playerCamera.SetIdleTransform(endingCameraPos);
-                playerCamera.SetMode(PlayerCameraController.CameraMode.idle);
+                playerCamera.SetMode(PlayerState.idle);
+                //ui
+                playerUI.SetState(PlayerState.idle);
+                //sys
             break;
             case GameState.result:
+                //player
+                playerCamera.SetIdleTransform(endingCameraPos);
+                playerCamera.SetMode(PlayerState.idle);
+                //ui
+                playerUI.SetState(PlayerState.idle);
                 resultCanvas.SetActive(true);
+                //sys
             break;
         }
     }
@@ -116,8 +134,8 @@ public class GameController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.1f);
 
-        //title
-        SetState(GameState.title);
+        //ーーーー title ーーーー
+        SetState(GameState.title, true);
         while(true)
         {
             if(plInput.GetContinueDown())
@@ -128,76 +146,83 @@ public class GameController : MonoBehaviour
         }
 
 
-        //introduction
+        //ーーーー introduction ーーーー
         SetState(GameState.introduction);
 
-        player_textbox.SetActive(true);
-        player_textbox.SetText("輸送機大破!\n迎撃システム作動まで残り10秒!");
+        playerUI.SetText("輸送機大破!\n迎撃システム作動まで残り10秒!");
         yield return new WaitForSeconds(2);
-        player_textbox.SetText("拾えるものは何でも拾え!\n着地と同時に戦闘開始だ!");
+        playerUI.SetText("拾えるものは何でも拾え!\n着地と同時に戦闘開始だ!");
         yield return new WaitForSeconds(3);
 
-        //fall
+        //ーーーー fall ーーーー
         SetState(GameState.fall);
-        playerCamera.SetMode(PlayerCameraController.CameraMode.fall);
 
-        player_textbox.SetActive(true);
-        player_textbox.SetText("空中のゴミは早い者勝ちだ!\n左右に動いて体当たりしろ!");
-        yield return new WaitForSeconds(2);
-        player_textbox.SetActive(false);
+        items_spawner.Spawn();
 
-        yield return new WaitForSeconds(8);
+        playerUI.SetText("空中のゴミは早い者勝ちだ!\n左右に動いて体当たりしろ!");
+        yield return new WaitForSeconds(3);
+        playerUI.SetText("");
 
-        //annihilation
+        //yield return new WaitForSeconds(12);
+        yield return new WaitForSeconds(11.8f);
+
+        //ーーーー annihilation ーーーー
         SetState(GameState.annihilation);
-        playerCamera.SetMode(PlayerCameraController.CameraMode.battle);
 
         items_spawner.DeleteFreeItems();
-        enemy_spawner1.Spawn();
+        for(int i = 0; i < enemy_spawner1.Length; ++i)
+        {
+            enemy_spawner1[i].Spawn();
+        }
 
-        player_textbox.SetActive(true);
-        player_textbox.SetText("着地成功!!\nそのクソ武装で敵をブチ抜け!!");
+        playerUI.SetText("着地成功!!\nそのクソ武装で敵をブチ抜け!!");
         yield return new WaitForSeconds(2);
-        player_textbox.SetActive(false);
+        playerUI.SetText("");
 
         yield return new WaitForSeconds(8);
 
-        //boss
+        //ーーーー boss ーーーー
         SetState(GameState.boss);
-        playerCamera.SetMode(PlayerCameraController.CameraMode.battle);
 
-        enemy_spawner2.Spawn();
+        for(int i = 0; i < enemy_spawner2.Length; ++i)
+        {
+            enemy_spawner2[i].Spawn();
+        }
 
-        player_textbox.SetActive(true);
-        player_textbox.SetText("全武装、リミッター解除!\n撃ちまくれ!");
+        playerUI.SetText("全武装、リミッター解除!\n撃ちまくれ!");
         yield return new WaitForSeconds(2);
-        player_textbox.SetActive(false);
+        playerUI.SetText("");
 
         yield return new WaitForSeconds(8);
+
+        int allEnemyCount = 0;
+        for(int i = 0; i < enemy_spawner1.Length; ++i)
+        {
+            allEnemyCount += enemy_spawner1[i].GetSpawnedNum();
+        }
+        for(int i = 0; i < enemy_spawner2.Length; ++i)
+        {
+            allEnemyCount += enemy_spawner2[i].GetSpawnedNum();
+        }
 
         int playerItemCount = player.GetItemCount();
-        int killcount = (64 + 64) - EnemyManager.Instance.GetNowCommonEnemyCount();
+        int killcount = allEnemyCount - EnemyManager.Instance.GetNowCommonEnemyCount();
         string rank = "作戦失敗。……まあ、あんなアセンじゃ当然か。";
-        if(killcount > 80) { rank = "歴史に刻め。この10秒間の奇跡を。"; }
+        if(killcount > (allEnemyCount*0.7f)) { rank = "歴史に刻め。この10秒間の奇跡を。"; }
 
         resultText.text = string.Format("回収武器数: {0}\n撃破敵数: {1}\n\n{2}",playerItemCount,killcount,rank);
 
-        //ending
+        //ーーーー ending ーーーー
         SetState(GameState.ending);
-        playerCamera.SetIdleTransform(titleCameraPos);
-        playerCamera.SetMode(PlayerCameraController.CameraMode.idle);
 
-        player_textbox.SetActive(true);
-        player_textbox.SetText("...");
+        playerUI.SetText("...");
         yield return new WaitForSeconds(0.1f);
-        player_textbox.SetActive(false);
+        playerUI.SetText("");
 
         //yield return new WaitForSeconds(8);
 
-        //result
+        //ーーーー result ーーーー
         SetState(GameState.result);
-        playerCamera.SetIdleTransform(titleCameraPos);
-        playerCamera.SetMode(PlayerCameraController.CameraMode.idle);
 
         while(true)
         {

@@ -6,13 +6,13 @@ public class Item : MonoBehaviour
     [SerializeField] string itemName = "Scrap_01";
     [SerializeField] ParticleSystem attackParticle;
 
-    bool isFall;
-    bool isFire;
+    public bool isFalling {get; private set;}
+    public bool isFire {get; private set;}
     float dtime;
 
     public void Start()
     {
-        isFall = true;
+        isFalling = true;
         isFire = false;
         transform.rotation = Quaternion.Euler(0, Random.Range(0,360),0);
     }
@@ -21,7 +21,7 @@ public class Item : MonoBehaviour
     {
         dtime = Time.deltaTime;
 
-        if(isFall){ Update_Fall(); }
+        if(isFalling){ Update_Fall(); }
     }
 
     void Update_Fall()
@@ -44,12 +44,13 @@ public class Item : MonoBehaviour
     public void Catch(Transform parent)
     {
         transform.SetParent(parent);
-        transform.position = new Vector3(transform.position.x, parent.position.y, transform.position.z);
-        isFall = false;
+        //transform.position = new Vector3(transform.position.x, parent.position.y, transform.position.z);
+        if(transform.localPosition.y < 0)
+        {
+            transform.localPosition = new Vector3(transform.localPosition.x, Random.Range(0f,1f), transform.localPosition.z);
+        }
+        isFalling = false;
     }
 
-    public bool GetFalling()
-    {
-        return isFall;
-    }
+    public string GetItemName() { return itemName; }
 }

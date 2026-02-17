@@ -29,13 +29,7 @@ public class PlayerCameraController : MonoBehaviour
     PlayerInput playerInput;
     [SerializeField] Transform target;
     Transform idleTra;
-    [SerializeField] CameraMode nowMode;
-    public enum CameraMode
-    {
-        idle,
-        fall,
-        battle,
-    }
+    [SerializeField] PlayerState nowMode;
 
     void Start()
     {
@@ -51,13 +45,23 @@ public class PlayerCameraController : MonoBehaviour
 
         switch(nowMode)
         {
-            case CameraMode.fall:
+            case PlayerState.idle:
+                Update_idle();
+            break;
+            case PlayerState.fall:
                 Update_fall();
             break;
-            case CameraMode.battle:
+            case PlayerState.battle:
                 Update_battle();
             break;
         }
+    }
+
+    void Update_idle()
+    {
+        if(!idleTra) { return; }
+        cameraTra.position = idleTra.position;
+        cameraTra.rotation = idleTra.rotation;
     }
 
     void Update_fall()
@@ -125,22 +129,22 @@ public class PlayerCameraController : MonoBehaviour
         cameraTra.rotation = Quaternion.Euler(x,y,0);
     }
 
-    public void SetMode(CameraMode mode)
+    public void SetMode(PlayerState mode)
     {
         if(nowMode == mode){ return; }
         nowMode = mode;
 
         switch(nowMode)
         {
-            case CameraMode.idle:
-                cameraTra.position = idleTra.position;
-                cameraTra.rotation = idleTra.rotation;
+            case PlayerState.idle:
+                //cameraTra.position = idleTra.position;
+                //cameraTra.rotation = idleTra.rotation;
             break;
-            case CameraMode.fall:
+            case PlayerState.fall:
                 localpos = fallPosition;
                 SetRotation(90,0);
             break;
-            case CameraMode.battle:
+            case PlayerState.battle:
                 localpos = basePosition;
             break;
         }
@@ -158,7 +162,16 @@ public class PlayerCameraController : MonoBehaviour
 
     public Vector3 getCameraPos(){ return cameraTra.position; }
     public Vector3 getCameraForward(){ return cameraTra.forward; }
+    public Quaternion getCameraRotation(){ return cameraTra.rotation; }
 
-    public float GetXRot() { return xRot; }
-    public float GetYRot() { return yRot; }
+    public float GetXRot() 
+    {
+        if(nowMode == PlayerState.battle){ return xRot; }
+        return cameraTra.eulerAngles.x;
+    }
+    public float GetYRot() 
+    {
+        if(nowMode == PlayerState.battle){ return yRot; }
+        return cameraTra.eulerAngles.y;
+    }
 }

@@ -18,7 +18,7 @@ public class Enemy_KAKASHI : Enemy
     {
         
     }
-    public override void E_Destroy()
+    protected override void E_Destroy()
     {
         Destroy(gameObject);
     }

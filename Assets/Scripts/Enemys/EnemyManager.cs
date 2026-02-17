@@ -33,28 +33,13 @@ public class EnemyManager : MonoBehaviour
             if (commonEnemys[i].IsDead())
             {
                 Enemy e = commonEnemys.Remove(i);
-                e.E_Destroy();
+                e.E_A_Destroy();
                 continue;
             }
 
             commonEnemys[i].E_A_Update(dtime);
-
-            /*if(commonEnemys[i].IsDead())
-            {
-                N2M4_I_Enemy e = commonEnemys.Remove(i);
-                e.Destroy();
-                continue;
-            }*/
-
-            /*if (i % maybeV2PMaxCount == maybeV2PCount)
-            { 
-
-            }*/
+            
         }
-        /*for(int i = bossEnemys.Index; i >= 0; i--)
-        {
-
-        }*/
     }
 
     public Enemy InstantiateEnemy(GameObject prefab, Vector3 position, Quaternion rotation)

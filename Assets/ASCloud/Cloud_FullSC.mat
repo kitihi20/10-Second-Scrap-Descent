@@ -85,7 +85,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: -10
     - _StepSize: 0.5
-    - _WebGLMode: 1
+    - _WebGLMode: 0
     m_Colors:
     - _AmbientColor: {r: 0.4259238, g: 0.535288, b: 0.6150943, a: 1}
     - _CameraForward: {r: 0, g: 0, b: 1, a: 0}

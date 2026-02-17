@@ -15,10 +15,13 @@ public class PlayerController : MonoBehaviour
 
     [Header("Components")]
     [SerializeField] PlayerCameraController cam;
+    [SerializeField] Transform modelTra;
     [SerializeField] Transform centerTra;
     [SerializeField] Transform groundPosition;
     [SerializeField] Rigidbody rb;
+    [SerializeField] Material limitWallMaterial;
     
+    int playerPosition_hash;
     float dtime;
     
     PlayerState nowState;
@@ -35,25 +38,29 @@ public class PlayerController : MonoBehaviour
     readonly float groundGraviy = -1;//地面にいるときの重力
 
 
-    public enum PlayerState
-    {
-        idle,
-        fall,
-        battle,
-    }
 
+    void Awake()
+    {
+        instance = this;
+        gotItems = new List<Item>(128);
+        playerPosition_hash = Shader.PropertyToID("_PlayerPosition");
+    }
 
     void Start()
     {
-        gotItems = new List<Item>(64);
         plInput = PlayerInput.instance;
-
-        instance = this;
     }
 
     void Update()
     {
         dtime = Time.deltaTime;
+
+        if(transform.position.y < -10)
+        {
+            SetPlayerPosition(new Vector3(0,1,0));
+        }
+
+        limitWallMaterial.SetVector(playerPosition_hash, GetCenterTra().position);
 
         switch(nowState)
         {
@@ -90,6 +97,10 @@ public class PlayerController : MonoBehaviour
         moveVector.z = Mathf.Lerp(moveVector.z, movevec.z, dtime * 10);
 
         moveVector.y += Time.deltaTime * fallGravity;
+
+        //modelTra.rotation = Quaternion.Lerp(modelTra.rotation, Quaternion.Euler(90,0,0), dtime*4);
+        modelTra.rotation = Quaternion.Lerp(modelTra.rotation, Quaternion.Euler(0,0,0), dtime*4);
+        centerTra.rotation = modelTra.rotation;
     }
 
     void Update_Battle()
@@ -119,6 +130,9 @@ public class PlayerController : MonoBehaviour
         {
             gotItems[i].transform.LookAt(targetPos);
         }
+
+        modelTra.rotation = Quaternion.Lerp(modelTra.rotation, Quaternion.Euler(0,cam.GetYRot(),0), dtime*4);
+        centerTra.rotation = modelTra.rotation;
     }
 
 
@@ -138,6 +152,15 @@ public class PlayerController : MonoBehaviour
         {
             gotItems[i].SetFire(v);
         }
+    }
+
+    void AddItem(Item i)
+    {
+        //if(gotItems.Contains(i)){ return; }//負荷...
+        if(!i.isFalling){ return; }
+        gotItems.Add(i);
+        i.Catch(centerTra);
+        PlayerLog.AddLog(string.Format("CATCH >>> {0}", i.GetItemName()));
     }
 
 
@@ -172,8 +195,8 @@ public class PlayerController : MonoBehaviour
         Item i = other.GetComponent<Item>();
         if(i)
         {
-            gotItems.Add(i);
-            i.Catch(centerTra);
+            AddItem(i);
+            return;
         }
     }
     

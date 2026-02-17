@@ -6,6 +6,8 @@ public class EnemyAreaSpawner : MonoBehaviour
     [SerializeField] bool autoSpawn = true;
     [SerializeField] int spawnNum = 4;
 
+    int spawnedNum = 0;
+
     public bool activated { get; private set; } = false;
 
     Unity.Mathematics.Random rand;
@@ -14,6 +16,7 @@ public class EnemyAreaSpawner : MonoBehaviour
     void Start()
     {
         rand = new Unity.Mathematics.Random((uint)Random.Range(0,100000));
+        spawnedNum = 0;
         
         if (autoSpawn)
         {
@@ -32,8 +35,14 @@ public class EnemyAreaSpawner : MonoBehaviour
             pos.y = Random.Range(lopos.y, hipos.y);
             pos.z = Random.Range(lopos.z, hipos.z);
             EnemyManager.Instance.InstantiateEnemy(enemyPrefab, pos, Quaternion.Euler(0,Random.Range(-180,180),0));
+            spawnedNum++;
         }
         activated = true;
+    }
+
+    public int GetSpawnedNum()
+    {
+        return spawnedNum;
     }
 
 
